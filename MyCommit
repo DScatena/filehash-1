@@ -1,0 +1,51 @@
+#Code for reading in the dataset and/or processing the data
+if (!file.exists("activity.csv") )
+{
+dlurl <- 'http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip'  
+download.file(dlurl,destfile='repdata%2Fdata%2Factivity.zip',mode='wb')  
+unzip('repdata%2Fdata%2Factivity.zip')
+}
+    
+data <- read.csv("activity.csv") 
+    
+#Histogram of the total number of steps taken each day
+steps_per_day <- aggregate(steps ~ date, data, sum)
+hist(steps_per_day$steps, main = paste("Total Steps Per Day"), col="red",xlab="Number of Steps")
+
+#Mean and median number of steps taken each day
+rmean <- mean(steps_per_day$steps)
+rmean
+
+rmedian <- median(steps_per_day$steps)
+rmedian
+
+#Time series plot of the average number of steps taken
+steps_per_interval <- aggregate(steps ~ interval, data, mean)
+plot(steps_per_interval$interval,steps_per_interval$steps, type="l", xlab="Interval", ylab="Number of Steps",main="Average Number of Steps per Day by Interval")
+
+#The 5-minute interval that, on average, contains the maximum number of steps
+max_interval <- steps_per_interval[which.max(steps_per_interval$steps),1]
+max_interval
+
+#Code to describe and show a strategy for imputing missing data
+MissingTotal <- sum(!complete.cases(data))
+MissingTotal
+
+StepsAverage <- aggregate(steps ~ interval, data = data, FUN = mean)
+FillMissing <- numeric()
+obs <- data[i, ]
+if (is.na(obs$steps))
+steps <- subset(StepsAverage, interval == obs$interval)$steps
+steps <- obs$steps
+FillMissing <- c(FillMissing, steps)
+new_activity <- data
+new_activity$steps <- FillMissing
+
+
+#Histogram of the total number of steps taken each day after missing values are imputed
+StepsTotalUnion <- aggregate(steps ~ date, data = new_activity, sum, na.rm = TRUE)
+
+#Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+hist(StepsTotalUnion$steps, main = paste("Total Steps Per Day"), col="blue", xlab="Number of Steps")
+hist(steps_per_day$steps, main = paste("Total Steps Per Day"), col="red", xlab="Number of Steps", add=T)
+legend("topright", c("Imputed", "Non-imputed"), col=c("gray", "green"), lwd=10)
